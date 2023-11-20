@@ -2,19 +2,19 @@
   description = "Nix flake for installation of disassembler Binary ninja.";
 
   inputs.flake-compat = {
-	url = "github:edolstra/flake-compat"
+	url = "github:edolstra/flake-compat";
         flake = false;
   };
   outputs = { self, nixpkgs, flake-compat, ... }:
   let 
     pkgs = nixpkgs.legacyPackages.x86_64-linux;
-    #targetPks = common.nix;
+    targetPkgs = import ./common.nix;
     runScriptPrefix = {errorOut ? true}: ''
       # Needed for simulink even on wayland systems
       #export QT_QPA_PLATFORM=xcb
       # Search for an imperative declaration of the installation directory of binaryninja
       if [[ -f ~/.config/binaryninja/nix.sh ]]; then
-        source ~/.config/binarninja/nix.sh
+        source ~/.config/binaryninja/nix.sh
     '' + pkgs.lib.optionalString errorOut ''else
         echo "nix-binaryninja-error: Did not find ~/.config/binaryninja/nix.sh" >&2
         exit 1
@@ -31,8 +31,8 @@
     # We use substituteInPlace after we run `install`
     # -desktop is needed, see:
     # https://www.mathworks.com/matlabcentral/answers/20-how-do-i-make-a-desktop-launcher-for-matlab-in-linux#answer_25
-    exec = "@out@/bin/binaryninja %u";
-    icon = "binary-ninja";
+    exec = "@out@/binaryninja %u";
+#    icon = "binary-ninja";
     # Most of the following are copied from octave's desktop launcher
     categories = [
       "Utility"
@@ -48,16 +48,17 @@
       "numerical computation"
       "plotting"
     ];
-    comment = [
-      "Binary Ninja: A Reverse Engineering Platform"
-    ];
+    #comment = [
+    #  "Binary Ninja: A Reverse Engineering Platform"
+    #];
   };
   # Might be useful for usage of this flake in another flake with devShell +
     # direnv setup. See:
     # https://gitlab.com/doronbehar/nix-matlab/-/merge_requests/1#note_631741222
     shellHooksCommon = (runScriptPrefix {}) + ''
-      export C_INCLUDE_PATH=$INSTALL_DIR/extern/include:$C_INCLUDE_PATH
-      export CPLUS_INCLUDE_PATH=$INSTALL_DIR/extern/include:$CPLUS_INCLUDE_PATH
+      export C_INCLUDE_PATH=$INSTALL_DIR:$C_INCLUDE_PATH
+      export CPLUS_INCLUDE_PATH=$INSTALL_DIR:$CPLUS_INCLUDE_PATH
+      export LD_LIBRARY_PATH=$INSTALL_DIR:$LD_LIBRARY_PATH
       # Rename the variable for others to extend it in their shellHook
       export BINARYNINJA_INSTALL_DIR="$INSTALL_DIR"
       unset INSTALL_DIR
@@ -97,9 +98,9 @@
         same as the one generated from your installation.
       '';
     };
-    in {
+  in {
 
-    packages.x86_64-linux.matlab = pkgs.buildFHSUserEnv {
+    packages.x86_64-linux.binaryninja = pkgs.buildFHSUserEnv {
       name = "binaryninja";
       inherit targetPkgs;
       extraInstallCommands = ''
@@ -107,12 +108,14 @@
         substituteInPlace $out/share/applications/binaryninja.desktop \
           --replace "@out@" ${placeholder "out"}
 	#FIX this up, it is built dynamically, idk
-        install -Dm644 ${./icons/hicolor/256x256/matlab.png} $out/share/icons/hicolor/256x256/matlab.png
-        install -Dm644 ${./icons/hicolor/512x512/matlab.png} $out/share/icons/hicolor/512x512/matlab.png
-        install -Dm644 ${./icons/hicolor/64x64/matlab.png} $out/share/icons/hicolor/64x64/matlab.png
-      '';
+       '';
+       
+ #install -Dm644 ${./icons/hicolor/256x256/matlab.png} $out/share/icons/hicolor/256x256/matlab.png
+        #install -Dm644 ${./icons/hicolor/512x512/matlab.png} $out/share/icons/hicolor/512x512/matlab.png
+        #install -Dm644 ${./icons/hicolor/64x64/matlab.png} $out/share/icons/hicolor/64x64/matlab.png
+      #'';
       runScript = pkgs.writeScript "binaryninja-runner" ((runScriptPrefix {}) + ''
-        exec $INSTALL_DIR/bin/binaryninja "$@"
+        exec $INSTALL_DIR/binaryninja "$@"
       '');
       meta = metaCommon // {
         description = "Binaryninja - the GUI launcher";
@@ -123,10 +126,11 @@
       inherit targetPkgs;
       runScript = pkgs.writeScript "binaryninja-shell-runner" (
         (runScriptPrefix {
-          # If the user hasn't setup a ~/.config/binaryninja/nix.sh file yet, don't
-          # yell at them that it's missing
+        #  # If the user hasn't setup a ~/.config/binaryninja/nix.sh file yet, don't
+        #  # yell at them that it's missing
           errorOut = false;
-        }) + ''
+        }) +
+        ''
         cat <<EOF
         ============================
         welcome to binaryninja-matlab shell!
@@ -156,7 +160,7 @@
         cp -r ${src}/ matlab-python-src
         sourceRoot=$PWD/matlab-python-src
       '';
-      patches = [
+      #patches = [
         # Matlab designed this python package to be installed imperatively, and
         # on an impure system - running `python setup.py install` creates an
         # `_arch.txt` file in /usr/local/lib/python3.9/site-packages/matlab (or
@@ -165,8 +169,8 @@
         # and the best way IMO to work around this is to patch the __init__.py
         # file to use the $MATLAB_INSTALL_DIR to find these shared objects and
         # not read any _arch.txt file.
-        ./python-no_arch.txt-file.patch
-      ];
+       # ./python-no_arch.txt-file.patch
+      #];
       src = generatePythonSrc "2022a";
       meta = metaCommon // {
         homepage = "https://www.mathworks.com/help/matlab/matlab-engine-for-python.html";
@@ -174,7 +178,7 @@
       };
     };
     packages.x86_64-linux.binaryninja-python-shell = pkgs.buildFHSUserEnv {
-      name = "binarynija-python-shell";
+      name = "binaryninja-python-shell";
       inherit targetPkgs;
       runScript = pkgs.writeScript "binaryninja-python-shell-runner" (shellHooksCommon + ''
         export PYTHONPATH=${self.packages.x86_64-linux.binaryninja-python-package}/${pkgs.python3.sitePackages}
