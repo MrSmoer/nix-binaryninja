@@ -41,13 +41,6 @@
       "text/x-octave"
       "text/x-matlab"
     ];
-    keywords = [
-      "science"
-      "math"
-      "matrix"
-      "numerical computation"
-      "plotting"
-    ];
     #comment = [
     #  "Binary Ninja: A Reverse Engineering Platform"
     #];
@@ -66,7 +59,7 @@
     # Used in many packages
     metaCommon = with pkgs.lib; {
       homepage = "https://binary.ninja/";
-      # This license is not of matlab itself, but for this repository
+      # This license is not of binarninja itself, but for this repository
       license = licenses.mit;
       # Probably best to install this completely imperatively on a system other
       # then NixOS.
@@ -133,7 +126,7 @@
         ''
         cat <<EOF
         ============================
-        welcome to binaryninja-matlab shell!
+        welcome to binaryninja shell!
 
         To install binaryninja:
         ${nixpkgs.lib.strings.escape ["`" "'" "\"" "$"] (builtins.readFile ./install.adoc)}
@@ -202,7 +195,7 @@
       buildInputs = [
         self.packages.x86_64-linux.binaryninja-shell
       ];
-      # From some reason using the attribute matlab-shell directly as the
+      # From some reason using the attribute binaryninja-shell directly as the
       # devShell doesn't make it run like that by default.
       shellHook = ''
         exec binaryninja-shell
