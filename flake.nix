@@ -10,8 +10,8 @@
     pkgs = nixpkgs.legacyPackages.x86_64-linux;
     targetPkgs = import ./common.nix;
     runScriptPrefix = {errorOut ? true}: ''
-      # Needed for simulink even on wayland systems
-      #export QT_QPA_PLATFORM=xcb
+      # Set for running on wayland systems
+      #export QT_QPA_PLATFORM=wayland
       # Search for an imperative declaration of the installation directory of binaryninja
       if [[ -f ~/.config/binaryninja/nix.sh ]]; then
         source ~/.config/binaryninja/nix.sh
@@ -27,19 +27,22 @@
     '';
     desktopItem = pkgs.makeDesktopItem {
     desktopName = "Binary Ninja";
-    name = "binaryninja";
+    name = "Binary Ninja";
     # We use substituteInPlace after we run `install`
     # -desktop is needed, see:
     # https://www.mathworks.com/matlabcentral/answers/20-how-do-i-make-a-desktop-launcher-for-matlab-in-linux#answer_25
     exec = "@out@/binaryninja %u";
 #    icon = "binary-ninja";
     # Most of the following are copied from octave's desktop launcher
+    mimeTypes = [
+      "text/x-scheme-handler/binaryninja"
+      "text/x-binaryninja"
+    ];
+    icon = [];
+    terminal = false;
+    type = "Application";
     categories = [
       "Utility"
-    ];
-    mimeTypes = [
-      "text/x-octave"
-      "text/x-matlab"
     ];
     #comment = [
     #  "Binary Ninja: A Reverse Engineering Platform"
@@ -82,13 +85,14 @@
       }.${version};
       hashMode = "recursive";
       message = ''
-        In order to use the matlab python engine, you have to run these commands:
+        //TODO THIS IS NOT TESTED YET
+        In order to use the binaryninja python engine, you have to run these commands:
 
         > source ~/.config/binaryninja/nix.sh
         > nix store add-path $INSTALL_DIR/extern/engines/python --name 'binaryninja-python-src'
 
-        And hopefully the hash that's in nix-matlab's flake.nix will be the
-        same as the one generated from your installation.
+        And hopefully the hash that's in nix-binaryninja's flake.nix will be the
+        same as the one generated from your installation. ?What hash? A hash?
       '';
     };
   in {
@@ -126,9 +130,9 @@
         ''
         cat <<EOF
         ============================
-        welcome to binaryninja shell!
+        welcome to Binaryninja shell!
 
-        To install binaryninja:
+        To install Binaryninja:
         ${nixpkgs.lib.strings.escape ["`" "'" "\"" "$"] (builtins.readFile ./install.adoc)}
 
         4. Finish the installation, and exit the shell (with \`exit\`).
@@ -150,8 +154,8 @@
       # No version - can be used with every matlab/binaryninja? version (R2021b or R2021a etc)
       name = "binaryninja-python-package";
       unpackCmd = ''
-        cp -r ${src}/ matlab-python-src
-        sourceRoot=$PWD/matlab-python-src
+        cp -r ${src}/ binaryninja-python-src
+        sourceRoot=$PWD/binaryninja-python-src
       '';
       #patches = [
         # Matlab designed this python package to be installed imperatively, and
