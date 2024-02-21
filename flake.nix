@@ -27,18 +27,18 @@
     '';
     desktopItem = pkgs.makeDesktopItem {
     desktopName = "Binary Ninja";
-    name = "Binary Ninja";
+    name = "binaryninja";
     # We use substituteInPlace after we run `install`
     # -desktop is needed, see:
     # https://www.mathworks.com/matlabcentral/answers/20-how-do-i-make-a-desktop-launcher-for-matlab-in-linux#answer_25
     exec = "@out@/binaryninja %u";
-#    icon = "binary-ninja";
+    #icon = "binary-ninja";
     # Most of the following are copied from octave's desktop launcher
     mimeTypes = [
       "text/x-scheme-handler/binaryninja"
       "text/x-binaryninja"
     ];
-    icon = [];
+    icon = "binarninja";
     terminal = false;
     type = "Application";
     categories = [
@@ -104,8 +104,8 @@
         install -Dm644 ${desktopItem}/share/applications/binaryninja.desktop $out/share/applications/binaryninja.desktop
         substituteInPlace $out/share/applications/binaryninja.desktop \
           --replace "@out@" ${placeholder "out"}
-	#FIX this up, it is built dynamically, idk
        '';
+	#FIX this up, it is built dynamically, idk
        
  #install -Dm644 ${./icons/hicolor/256x256/matlab.png} $out/share/icons/hicolor/256x256/matlab.png
         #install -Dm644 ${./icons/hicolor/512x512/matlab.png} $out/share/icons/hicolor/512x512/matlab.png
