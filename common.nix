@@ -16,7 +16,8 @@ pkgs:
 
   libxkbcommon
   libglvnd
-   wayland
+  wayland
+  libxml2
 ]) ++ (with pkgs.xorg; [
   #libSM
   libX11
